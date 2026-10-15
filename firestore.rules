@@ -1,0 +1,18 @@
+﻿rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Phòng chat chung, chỉ tài khoản đã đăng nhập mới được đọc/gửi.
+    match /chat/{messageId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasAll(['text', 'userId', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['text', 'userId', 'createdAt'])
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 2000
+        && request.resource.data.createdAt is timestamp;
+      allow update, delete: if false;
+    }
+  }
+}
